@@ -17,7 +17,7 @@
     "querystring": "^0.2.0"
   },
   "engines": {
-    "node": "^16.14.0"
+    "node": "^22.0.0"
   },
   "repository": {
     "url": "https://glitch.com/edit/#!/glitch-hello-node"
