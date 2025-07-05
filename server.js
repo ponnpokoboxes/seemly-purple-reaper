@@ -359,7 +359,7 @@ async function meiboAudit_bulk(obj, stampArr, answerArr, roleArr) {
     try {
       channelID = String(stampArr[i][0]);
       messageID = String(stampArr[i][1]).replace(
-        String(obj.serverURL) + String(stampArr[i][0]),
+        String(obj.serverURL) + String(stampArr[i][0]) + "/",
         ""
       );
       channel = client.channels.cache.get(String(channelID));
