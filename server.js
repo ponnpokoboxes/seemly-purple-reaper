@@ -100,6 +100,12 @@ http
           res.end();
           return;
         }
+        if (dataObject.type == "getRoleList") {
+          console.log("getRoleList");
+          roleListRetliever(dataObject);
+          res.end();
+          return;
+        }
         if (dataObject.type == "finish") {
           console.log("ponnpoko:" + dataObject.type);
           let userId = String(dataObject.userID);
@@ -528,7 +534,7 @@ async function roleListRetliever(obj) {
     obj: obj,
     roleList: roleList,
   };
-  //メンバーリスト返信
+  //ロールリスト返信
   try {
     let req = JSON.stringify({
       p1: p1,
