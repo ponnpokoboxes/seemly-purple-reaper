@@ -506,6 +506,15 @@ async function memberListRetliever(obj) {
     obj: obj,
     memberList: memberList,
   };
+  let userNameList = [];
+  for(let i = 0; i < memberList.length; i++){
+    userNameList.push(memberList[i][1].user.username);
+  }
+  let p1 = {
+    obj: obj,
+    memberList: memberList,
+    userNameList: userNameList,
+  };
   //メンバーリスト返信
   try {
     let req = JSON.stringify({
