@@ -174,6 +174,10 @@ client.on("warn", (c) => {
   console.log("▼▼warnによる情報▼▼\n" + c);
 });
 
+client.on("ratelimit", (c) => {
+  console.log(c);
+});
+
 if (process.env.OPERAS == undefined) {
   console.log("OPERASが設定されていません。");
   process.exit(0);
