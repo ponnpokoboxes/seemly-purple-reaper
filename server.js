@@ -160,18 +160,18 @@ http
 
 let readyIs = "NA";
 
+client.once(Events.ClientReady, (c) => {
+  console.log("Bot準備完了～");
+  readyIs = "Discord Bot is active now\n";
+  client.user.setPresence({ activities: [{ name: "ゲーム補佐" }] });
+});
+
 client.on("debug", (c) => {
   console.log("▼▼debugによる情報▼▼\n" + c);
 });
 
 client.on("warn", (c) => {
   console.log("▼▼warnによる情報▼▼\n" + c);
-});
-
-client.once(Events.ClientReady, (c) => {
-  console.log("Bot準備完了～");
-  readyIs = "Discord Bot is active now\n";
-  client.user.setPresence({ activities: [{ name: "ゲーム補佐" }] });
 });
 
 if (process.env.OPERAS == undefined) {
