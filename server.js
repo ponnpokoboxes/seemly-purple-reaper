@@ -25,6 +25,7 @@ const client = new Client({
     GatewayIntentBits.GuildMembers,
     GatewayIntentBits.GuildPresences,
     GatewayIntentBits.GuildVoiceStates,
+	GatewayIntentBits.DirectMessages,
   ],
   partials: [Partials.Channel, Partials.Reaction, Partials.Message],
 });
@@ -58,6 +59,12 @@ http
         }
         if (dataObject.type == "roleReplace") {
           console.log("roleReplace");
+          meiboAudit_master(dataObject);
+          res.end();
+          return;
+        }
+        if (dataObject.type == "recordSurvey") {
+          console.log("recordSurvey");
           meiboAudit_master(dataObject);
           res.end();
           return;
@@ -103,6 +110,31 @@ http
         if (dataObject.type == "getRoleList") {
           console.log("getRoleList");
           roleListRetliever(dataObject);
+          res.end();
+          return;
+        }
+		if (dataObject.type == "kotaeMng") {
+          console.log("kotaeMng");
+          quizReq(dataObject);
+          res.end();
+          return;
+        }
+		if (dataObject.type == "doAudit") {
+          console.log("doAudit");
+          if (
+            dataObject.stampArr == undefined ||
+            dataObject.answerArr == undefined ||
+            dataObject.roleArr == undefined
+          ) {
+            res.end();
+            return;
+          }
+          meiboAudit_bulk(
+            dataObject,
+            dataObject.stampArr,
+            dataObject.answerArr,
+            dataObject.roleArr,
+          );
           res.end();
           return;
         }
@@ -391,7 +423,7 @@ async function meiboAudit_bulk(obj, stampArr, answerArr, roleArr) {
     } catch (e) {
       console.warn(e);
     }
-    await sleep(0.1 * 1000);
+    await sleep(0.5 * 1000);
   }
   //一括送信
   for (let i = 0; i < answerArr.length; i++) {
@@ -409,7 +441,7 @@ async function meiboAudit_bulk(obj, stampArr, answerArr, roleArr) {
         }
       for (let j = 0; j < str.length; j++) {
         sendMsgWithFrags(String(str[j][0]), String(str[j][2]), option);
-        await sleep(0.1 * 1000);
+        await sleep(2.0 * 1000);
       }
     } catch (e) {
       console.warn(e);
@@ -431,7 +463,7 @@ async function meiboAudit_bulk(obj, stampArr, answerArr, roleArr) {
     } catch (e) {
       console.warn(e);
     }
-    await sleep(0.1 * 1000);
+    await sleep(0.5 * 1000);
   }
 }
 
@@ -563,6 +595,55 @@ async function roleListRetliever(obj) {
     console.warn(e);
   }
   return;
+}
+
+//クイズ用。指定したメッセージについて選択肢ごとにIDの配列を返す
+async function quizReq(obj) {
+  let channelID = String(obj.channelID), 
+  quizID = String(obj.quizID)
+  uri = String(obj.uri);
+  console.log("channelID: ", channelID, "\nquizId: ", quizID);
+  let messageReacted2;
+  try{
+    if(obj.chType != ""){
+      messageReacted2 = await client.users.fetch(String(obj.chType));
+      messageReacted2 = await messageReacted2.createDM();
+      messageReacted2 = await messageReacted2.messages.fetch(quizID);}
+    else{messageReacted2 = await client.channels.cache
+        .get(channelID)
+        .messages.fetch(quizID);}
+    reactedEmojis(messageReacted2).then(async function (emojiIs2) {
+      let okuruNaiyou = {
+        obj: obj,
+        answers: emojiIs2,
+        message: {
+          authorID: messageReacted2.author.id,
+          content: messageReacted2.content,
+          createdTimestamp: messageReacted2.createdTimestamp,
+          retrievedAt: new Date().getTime()
+        },
+      };
+      let okuruJson = JSON.stringify(okuruNaiyou);
+      await fetching1(String(uri), okuruJson);
+      return "成功です";
+    });
+  }
+  catch(e){console.error("quizReq: ", e);}
+}
+
+function reactedEmojis(beforeMessage) {
+  return new Promise(function (resolve, reject) {
+    var emojiCs = Promise.all(
+      beforeMessage.reactions.cache.map(async (reaction) => {
+        const emojiName = reaction._emoji.name;
+        const emojiCount = reaction.count;
+        const reactionUsers = Array.from(await reaction.users.fetch());
+        console.log(emojiName, emojiCount);
+        return [emojiName, reactionUsers];
+      }),
+    );
+    resolve(emojiCs);
+  });
 }
 
 /*-----以下は汎用関数群-----*/
@@ -745,9 +826,12 @@ async function sendMsgWithFrags(channelId, text, options) {
     }
     if (files != undefined && files != null && files[0].search(/^base64File/) > -1) {
       let fileData = files[0].split(",");
-      console.log(fileData[1]);
-      let buffer = Buffer.from(String(fileData[2]), "base64");
-      files = [new AttachmentBuilder(buffer, { name: String(fileData[1]) })];
+      files = [];
+      for(let i = 0; i < (fileData.length / 3); i++){
+        console.log(fileData[i * 3 +1]);
+        let buffer = Buffer.from(String(fileData[i * 3 +2]), "base64");
+        files.push( new AttachmentBuilder(buffer, { name: String(fileData[i * 3 +1]) }) );
+      }
     }
     if (reply != undefined && reply != null) {
       reply = { messageReference: String(reply) };
